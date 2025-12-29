@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafePick AI - Sports</title>
+    <!-- Use Tailwind CSS (as requested implicitly by "best lightweight... UI") or just custom CSS -->
+    <!-- User asked for "no gradient", "premium". Custom CSS is safer for specific requests. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f4f4f5;
+            /* Zinc 100 */
+            color: #18181b;
+            /* Zinc 900 */
+            font-family: 'Inter', sans-serif;
+        }
+
+        .no-gradient {
+            background: #18181b;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e4e4e7;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .btn-primary {
+            background-color: #000;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #27272a;
+        }
+
+        /* Loader */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #000;
+            width: 20px;
+            height: 20px;
+            -webkit-animation: spin 1s linear infinite;
+            /* Safari */
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="min-h-screen flex flex-col">
+    <nav class="bg-white border-b border-zinc-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <span class="text-xl font-bold tracking-tight">SafePick AI</span>
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <a href="/sports"
+                            class="border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            Upcoming
+                        </a>
+                        <a href="/sports/history"
+                            class="border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            History
+                        </a>
+                        <a href="/sports/stats"
+                            class="border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            Stats
+                        </a>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-zinc-200 mt-auto">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-lg font-bold tracking-tight text-zinc-900">SafePick AI</span>
+                    <span class="text-xs text-zinc-500 px-2 py-0.5 bg-zinc-100 rounded-full">v2.0</span>
+                </div>
+
+                <div class="text-center text-sm text-zinc-500">
+                    &copy; 2025 Kingsworld. All rights reserved. <br>
+                    <span class="text-xs text-zinc-400">Powered by Gemini 2.0 & ESPN</span>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <!-- Logo Placeholder -->
+                    <div
+                        class="w-8 h-8 bg-zinc-900 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-lg">
+                        K
+                    </div>
+                    <span class="text-sm font-semibold text-zinc-700">Kingsworld</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal for Prediction -->
+    <div id="predictionModal"
+        class="fixed inset-0 bg-zinc-900 bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 m-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold" id="modalTitle">Match Prediction</h3>
+                <button onclick="closeModal()" class="text-zinc-400 hover:text-zinc-600">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <div id="modalContent" class="space-y-4">
+                <!-- Content injected here -->
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button onclick="closeModal()"
+                    class="btn-primary px-4 py-2 rounded-md text-sm font-medium">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function closeModal() {
+            document.getElementById('predictionModal').classList.add('hidden');
+        }
+
+        async function predictMatch(id, home, away, league) {
+            const modal = document.getElementById('predictionModal');
+            const content = document.getElementById('modalContent');
+            const title = document.getElementById('modalTitle');
+
+            title.innerText = `${home} vs ${away}`;
+            content.innerHTML = '<div class="flex justify-center p-8"><div class="loader"></div></div>';
+            modal.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/sports/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ event_id: id, home_team: home, away_team: away, league: league })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    content.innerHTML = `<div class="text-red-500 p-4 text-center">Error: ${data.error}</div>`;
+                } else {
+                    // Match the new prediction_prompt.txt format
+                    const bestPick = data.best_pick || data.prediction?.winner || 'Analysis Unavailable';
+                    const saferAlt = data.safer_alternative || data.prediction?.score || 'N/A';
+                    const reasoning = data.reasoning || [];
+                    const disclaimer = data.disclaimer || "AI analysis based on historical data.";
+
+                    let reasoningHtml = '';
+                    if (Array.isArray(reasoning)) {
+                        reasoningHtml = '<ul class="text-left text-sm space-y-2 list-disc pl-5 text-zinc-600">' +
+                            reasoning.map(r => `<li>${r}</li>`).join('') +
+                            '</ul>';
+                    } else if (typeof reasoning === 'string') {
+                        reasoningHtml = `<p class="text-sm text-zinc-600">${reasoning}</p>`;
+                    }
+
+                    content.innerHTML = `
+                        <div class="space-y-6">
+                            <!-- Main Picks -->
+                            <div class="grid grid-cols-1 gap-4">
+                                <div class="bg-black text-white p-5 rounded-xl shadow-lg relative overflow-hidden">
+                                    <div class="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-zinc-800 rounded-full opacity-20 blur-xl"></div>
+                                    <div class="text-xs text-zinc-400 uppercase font-bold tracking-wider mb-1">Best Pick</div>
+                                    <div class="text-2xl font-extrabold tracking-tight">${bestPick}</div>
+                                </div>
+                                <div class="bg-zinc-100 p-5 rounded-xl border border-zinc-200">
+                                    <div class="text-xs text-zinc-500 uppercase font-bold tracking-wider mb-1">Safer Alternative</div>
+                                    <div class="text-xl font-bold text-zinc-800">${saferAlt}</div>
+                                </div>
+                            </div>
+
+                            <!-- Reasoning -->
+                            <div class="bg-white p-4 rounded-xl border border-zinc-100">
+                                <div class="text-xs text-zinc-400 uppercase font-bold tracking-wider mb-3">AI Reasoning</div>
+                                ${reasoningHtml}
+                            </div>
+                            
+                            <!-- Disclaimer -->
+                            <div class="text-xs text-zinc-400 text-center italic border-t border-zinc-100 pt-4">
+                                ${disclaimer} <br> SafePick AI • Gemini 2.0 Flash
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                content.innerHTML = `<div class="text-red-500">System Error: ${e.message}</div>`;
+            }
+        }
+    </script>
+</body>
+
+</html>

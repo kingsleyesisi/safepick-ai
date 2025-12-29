@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafePick AI | Intelligent Football Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="background-globes">
+        <div class="globe globe-1"></div>
+        <div class="globe globe-2"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fa-solid fa-brain"></i>
+                <span>SafePick AI</span>
+            </div>
+            <p class="subtitle">Intelligent Match Analysis Engine</p>
+        </header>
+
+        <main>
+            <section class="prediction-form-card">
+                <form id="predictionForm">
+                    <div class="input-group">
+                        <label for="homeTeam">Home Team</label>
+                        <input type="text" id="homeTeam" placeholder="e.g. Arsenal" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="awayTeam">Away Team</label>
+                        <input type="text" id="awayTeam" placeholder="e.g. Brighton" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="league">League</label>
+                        <input type="text" id="league" placeholder="e.g. Premier League" required>
+                    </div>
+
+                    <button type="submit" id="analyzeBtn">
+                        <span class="btn-text">Analyze Match</span>
+                        <div class="btn-loader hidden"></div>
+                    </button>
+                </form>
+            </section>
+
+            <section id="resultSection" class="result-card hidden">
+                <div class="match-header">
+                    <h2 id="matchTitle">Arsenal vs Brighton</h2>
+                    <span id="leagueBadge" class="league-badge">EPL</span>
+                </div>
+
+                <div class="picks-container">
+                    <div class="pick-box best-pick">
+                        <div class="pick-label"><i class="fa-solid fa-star"></i> Best Pick</div>
+                        <div class="pick-value" id="bestPick">Under 3.5 Goals</div>
+                    </div>
+
+                    <div class="pick-box safe-pick">
+                        <div class="pick-label"><i class="fa-solid fa-shield-halved"></i> Safer Alternative</div>
+                        <div class="pick-value" id="safePick">Under 4.5 Goals</div>
+                    </div>
+                </div>
+
+                <div class="reasoning-section">
+                    <h3><i class="fa-solid fa-microchip"></i> AI Reasoning</h3>
+                    <ul id="reasoningList">
+                        <!-- Reasoning items injected here -->
+                    </ul>
+                </div>
+
+                <div class="disclaimer">
+                    <i class="fa-solid fa-circle-info"></i> <span id="disclaimerText">This is AI-generated analysis based on historical patterns.</span>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 SafePick AI. Not financial advice.</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

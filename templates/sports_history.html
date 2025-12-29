@@ -1,0 +1,110 @@
+{% extends "sports_layout.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div
+        class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-zinc-200">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Match History</h1>
+            <p class="text-zinc-500 text-sm mt-1">Results from the past 30 days.</p>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+            {% set leagues = [
+            ('all', 'All'),
+            ('epl', 'EPL'),
+            ('laliga', 'La Liga'),
+            ('bundesliga', 'Bundesliga'),
+            ('seriea', 'Serie A'),
+            ('ucl', 'UCL'),
+            ('championship', 'EFL'),
+            ('ligue1', 'Ligue 1'),
+            ('nba', 'NBA')
+            ] %}
+
+            {% for code, name in leagues %}
+            <a href="?league={{ code }}" class="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 
+               {% if active_league == code %}
+               bg-zinc-900 text-white shadow-md
+               {% else %}
+               bg-zinc-100 text-zinc-600 hover:bg-zinc-200
+               {% endif %}">
+                {{ name }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Results List -->
+    <div class="bg-white rounded-2xl shadow-sm border border-zinc-200 overflow-hidden">
+        {% if games %}
+        <div class="divide-y divide-zinc-100">
+            {% for game in games %}
+            <div
+                class="p-5 hover:bg-zinc-50 transition-colors duration-200 flex flex-col md:flex-row items-center gap-6">
+
+                <!-- Date / Status -->
+                <div class="md:w-32 flex flex-col items-center md:items-start text-center md:text-left shrink-0">
+                    <span class="text-zinc-500 text-xs font-semibold uppercase tracking-wider mb-1">{{ game.date |
+                        to_nigerian_time }}</span>
+                    <span class="text-zinc-400 text-xs bg-zinc-100 px-2 py-1 rounded-md">{{ game.status_detail }}</span>
+                </div>
+
+                <!-- Teams Matchup -->
+                <div class="flex-1 grid grid-cols-7 items-center w-full">
+                    <!-- Home -->
+                    <div class="col-span-3 flex items-center justify-end gap-3 text-right">
+                        <span
+                            class="font-semibold {% if game.home_team.winner %}text-black{% else %}text-zinc-500{% endif %} md:text-lg truncate">{{
+                            game.home_team.name }}</span>
+                        {% if game.home_team.logo %}
+                        <img src="{{ game.home_team.logo }}" class="w-8 h-8 md:w-10 md:h-10 object-contain shrink-0">
+                        {% else %}
+                        <div class="w-8 h-8 md:w-10 md:h-10 bg-zinc-200 rounded-full shrink-0"></div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Score -->
+                    <div class="col-span-1 flex justify-center">
+                        <div
+                            class="w-16 h-8 flex items-center justify-center bg-zinc-100 rounded-lg text-sm font-bold font-mono text-zinc-900">
+                            {{ game.home_team.score }} - {{ game.away_team.score }}
+                        </div>
+                    </div>
+
+                    <!-- Away -->
+                    <div class="col-span-3 flex items-center justify-start gap-3 text-left">
+                        {% if game.away_team.logo %}
+                        <img src="{{ game.away_team.logo }}" class="w-8 h-8 md:w-10 md:h-10 object-contain shrink-0">
+                        {% else %}
+                        <div class="w-8 h-8 md:w-10 md:h-10 bg-zinc-200 rounded-full shrink-0"></div>
+                        {% endif %}
+                        <span
+                            class="font-semibold {% if game.away_team.winner %}text-black{% else %}text-zinc-500{% endif %} md:text-lg truncate">{{
+                            game.away_team.name }}</span>
+                    </div>
+                </div>
+
+                <!-- Action (Analysis maybe?) -->
+                <div class="w-full md:w-auto mt-4 md:mt-0 md:ml-auto opacity-0 pointer-events-none md:w-[130px]">
+                    <!-- Placeholder for alignment or future 'View Report' button -->
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="flex flex-col items-center justify-center py-24 text-center">
+            <div class="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mb-4">
+                <svg class="w-8 h-8 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-zinc-900">No Past Results</h3>
+            <p class="text-zinc-500 mt-1 max-w-sm">No match results found for this period.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

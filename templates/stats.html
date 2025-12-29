@@ -1,0 +1,128 @@
+{% extends "sports_layout.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Platform Statistics</h1>
+            <p class="text-zinc-500 text-sm mt-1">Real-time usage metrics and auto-graded results.</p>
+        </div>
+        <button onclick="resetStats()"
+            class="px-4 py-2 bg-red-50 text-red-600 text-sm font-bold rounded-lg hover:bg-red-100 transition-colors">
+            Reset All Stats
+        </button>
+    </div>
+
+    <!-- Key Metrics Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Win Rate -->
+        <div class="bg-black text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
+            <div class="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-zinc-800 rounded-full opacity-30 blur-xl"></div>
+            <div>
+                <p class="text-sm font-medium text-zinc-400 uppercase tracking-wider">Win Rate</p>
+                <div class="mt-2 text-4xl font-extrabold">{{ stats.get('win_rate', 0) }}%</div>
+                <p class="text-xs text-zinc-500 mt-1">Based on {{ stats.get('total_graded', 0) }} graded picks</p>
+            </div>
+        </div>
+
+        <!-- Visits -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200 flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-zinc-500 uppercase tracking-wider">Total Visits</p>
+                <div class="mt-2 text-4xl font-extrabold text-zinc-900">{{ stats.get('total_visits', 0) }}</div>
+            </div>
+            <div class="w-12 h-12 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                    </path>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Predictions -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200 flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-zinc-500 uppercase tracking-wider">AI Accuracy Check</p>
+                <div class="mt-2 text-4xl font-extrabold text-black">{{ stats.get('total_predictions', 0) }}</div>
+            </div>
+            <div class="w-12 h-12 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z">
+                    </path>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity List -->
+    <div class="bg-white rounded-2xl shadow-sm border border-zinc-200 overflow-hidden">
+        <div class="p-6 border-b border-zinc-100 flex justify-between items-center">
+            <h2 class="text-lg font-bold text-zinc-900">Manage Predictions</h2>
+            <button onclick="checkResults()" class="text-xs text-blue-600 font-bold hover:underline">
+                ↻ Check Results
+            </button>
+        </div>
+        {% if predictions %}
+        <div class="divide-y divide-zinc-100">
+            {% for pred in predictions %}
+            <div
+                class="p-4 hover:bg-zinc-50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex flex-col">
+                    <span class="text-sm font-semibold text-zinc-900">{{ pred.home_team }} vs {{ pred.away_team
+                        }}</span>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="px-2 py-0.5 bg-zinc-100 text-zinc-600 rounded text-[10px] font-bold uppercase">{{
+                            pred.league }}</span>
+                        <span class="text-xs text-zinc-500">{{ pred.created_at }}</span>
+                    </div>
+                    <div class="mt-2 text-sm text-zinc-800">
+                        P: <strong>{{ pred.prediction_data.best_pick }}</strong>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    {% if pred.result == 'Win' %}
+                    <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-lg">WON</span>
+                    {% elif pred.result == 'Loss' %}
+                    <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-lg">LOST</span>
+                    {% elif pred.result == 'Void' %}
+                    <span class="px-3 py-1 bg-zinc-200 text-zinc-600 text-xs font-bold rounded-lg">VOID</span>
+                    {% else %}
+                    <span
+                        class="px-3 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-lg border border-blue-100 flex items-center gap-1">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span> Pending
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-8 text-center text-zinc-500 text-sm">
+            No predictions generated yet.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    async function resetStats() {
+        if (!confirm("Are you sure? This will delete all history.")) return;
+        try {
+            await fetch('/sports/stats/reset', { method: 'POST' });
+            window.location.reload();
+        } catch (e) { alert("Error resetting"); }
+    }
+
+    async function checkResults() {
+        try {
+            await fetch('/sports/stats/check-results', { method: 'POST' });
+            window.location.reload();
+        } catch (e) { alert("Error checking results"); }
+    }
+</script>
+{% endblock %}
