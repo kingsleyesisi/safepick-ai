@@ -19,8 +19,6 @@ class GeminiService:
         except Exception as e:
             print(f"Error configuring Gemini Client: {e}")
             self.client = None
-            
-        self.prompt_template = self._load_prompt()
 
     def _load_prompt(self):
         try:
@@ -35,9 +33,12 @@ class GeminiService:
         if not self.client:
             return {"error": "Gemini API not configured or key missing."}
 
+        # Load prompt on every call to support hot-reloading of prompt file
+        prompt_template = self._load_prompt()
+        if not prompt_template:
             return {"error": "Prompt template not loaded"}
 
-        prompt = self.prompt_template.format(
+        prompt = prompt_template.format(
             home=home_team,
             away=away_team,
             league=league

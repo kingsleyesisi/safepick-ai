@@ -23,21 +23,34 @@
             </div>
         </div>
 
-        <div class="flex flex-wrap gap-2">
+        <!-- Scrollable League Strip -->
+        <div class="flex overflow-x-auto pb-2 -mx-2 px-2 gap-2 no-scrollbar"
+            style="-ms-overflow-style: none; scrollbar-width: none;">
+            <style>
+                .no-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+            </style>
             {% set leagues = [
             ('all', 'All'),
             ('epl', 'EPL'),
             ('laliga', 'La Liga'),
             ('bundesliga', 'Bundesliga'),
             ('seriea', 'Serie A'),
-            ('ucl', 'UCL'),
-            ('championship', 'EFL'),
             ('ligue1', 'Ligue 1'),
+            ('ucl', 'UCL'),
+            ('europa', 'Europa'),
+            ('afcon', 'AFCON'),
+            ('worldcup', 'World Cup'),
+            ('mls', 'MLS'),
+            ('brasileiro', 'Brazil Serie A'),
+            ('saudi', 'Saudi Pro'),
+            ('championship', 'EFL'),
             ('nba', 'NBA')
             ] %}
 
             {% for code, name in leagues %}
-            <a href="?league={{ code }}" class="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 
+            <a href="?league={{ code }}" class="whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 flex-shrink-0
                {% if active_league == code %}
                bg-zinc-900 text-white shadow-md
                {% else %}
@@ -148,7 +161,7 @@
             <h3 class="text-lg font-medium text-zinc-900">No Matches Found</h3>
             <p class="text-zinc-500 mt-1 max-w-sm">No upcoming matches scheduled for this league. Try checking the
                 history or switching leagues.</p>
-            <a href="?league=epl" class="mt-4 text-black text-sm font-medium hover:underline">Return to EPL</a>
+            <a href="?league=all" class="mt-4 text-black text-sm font-medium hover:underline">Return to All</a>
         </div>
         {% endif %}
     </div>

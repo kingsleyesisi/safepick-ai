@@ -9,10 +9,14 @@ class SportsService:
         'laliga': {'sport': 'soccer', 'slug': 'esp.1', 'name': 'La Liga'},
         'bundesliga': {'sport': 'soccer', 'slug': 'ger.1', 'name': 'Bundesliga'},
         'seriea': {'sport': 'soccer', 'slug': 'ita.1', 'name': 'Serie A'},
-        'ucl': {'sport': 'soccer', 'slug': 'uefa.champions', 'name': 'Champions League'},
         'ligue1': {'sport': 'soccer', 'slug': 'fra.1', 'name': 'Ligue 1'},
-        'eredivisie': {'sport': 'soccer', 'slug': 'ned.1', 'name': 'Eredivisie'},
-        'primeira': {'sport': 'soccer', 'slug': 'por.1', 'name': 'Primeira Liga'},
+        'ucl': {'sport': 'soccer', 'slug': 'uefa.champions', 'name': 'Champions League'},
+        'europa': {'sport': 'soccer', 'slug': 'uefa.europa', 'name': 'Europa League'},
+        'afcon': {'sport': 'soccer', 'slug': 'caf.nations', 'name': 'AFCON'},
+        'worldcup': {'sport': 'soccer', 'slug': 'fifa.world', 'name': 'World Cup'},
+        'mls': {'sport': 'soccer', 'slug': 'usa.1', 'name': 'MLS'},
+        'brasileiro': {'sport': 'soccer', 'slug': 'bra.1', 'name': 'Brasileirão'},
+        'saudi': {'sport': 'soccer', 'slug': 'sau.1', 'name': 'Saudi Pro League'},
         'championship': {'sport': 'soccer', 'slug': 'eng.2', 'name': 'Championship'},
         'nba': {'sport': 'basketball', 'slug': 'nba', 'name': 'NBA'}
     }
@@ -20,7 +24,6 @@ class SportsService:
     def _fetch_from_url(self, url, params=None):
         try:
             response = requests.get(url, params=params)
-            print(response.json())
             response.raise_for_status()
             return response.json()  
         except Exception:

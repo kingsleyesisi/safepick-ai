@@ -53,7 +53,7 @@ def index():
     # Redirect or render the sports main page as the home page
     from services.sports_service import SportsService
     sports_service = SportsService()
-    league = request.args.get('league', 'epl')
+    league = request.args.get('league', 'all')
     games = sports_service.get_games(league_code=league, type='upcoming')
     return render_template('sports_index.html', games=games, active_league=league)
 
