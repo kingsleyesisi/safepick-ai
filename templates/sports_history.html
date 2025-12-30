@@ -41,8 +41,8 @@
         {% if games %}
         <div class="divide-y divide-zinc-100">
             {% for game in games %}
-            <div
-                class="p-5 hover:bg-zinc-50 transition-colors duration-200 flex flex-col md:flex-row items-center gap-6">
+            <div onclick="openStatsModal('{{ game.league }}', '{{ game.id }}', '{{ game.status }}')"
+                class="p-5 hover:bg-zinc-50 cursor-pointer transition-colors duration-200 flex flex-col md:flex-row items-center gap-6">
 
                 <!-- Date / Status -->
                 <div class="md:w-32 flex flex-col items-center md:items-start text-center md:text-left shrink-0">
@@ -107,4 +107,6 @@
         {% endif %}
     </div>
 </div>
+
+{% include 'includes/stats_modal.html' %}
 {% endblock %}

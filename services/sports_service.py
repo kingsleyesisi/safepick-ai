@@ -36,18 +36,48 @@ class SportsService:
         return f"http://site.api.espn.com/apis/site/v2/sports/{config['sport']}/{config['slug']}/scoreboard"
 
     def get_games(self, league_code='epl', type='upcoming', dates=None):
+        all_games = []
         if league_code == 'all':
              # Aggregate all leagues (expensive, but requested)
-             all_games = []
              for code in self.LEAGUES_CONFIG.keys():
                  games = self._fetch_league_games(code, type, dates)
                  all_games.extend(games)
-             
-             # specific sort for aggregated list
-             all_games.sort(key=lambda x: x['date'], reverse=(type == "past"))
-             return all_games
         else:
-             return self._fetch_league_games(league_code, type, dates)
+             all_games = self._fetch_league_games(league_code, type, dates)
+        
+        # Sort by date
+        all_games.sort(key=lambda x: x['date'], reverse=(type == "past"))
+
+        if type == "upcoming":
+            # Split into Live and Upcoming
+            live_games = [g for g in all_games if g['status'] == 'in']
+            upcoming_games = [g for g in all_games if g['status'] == 'pre']
+            
+            # Sort upcoming by nearest time (already sorted by date above, but ensures asc)
+            # live games also sorted by start time
+            
+            # live games also sorted by start time
+
+            return {
+                'live': live_games,
+                'upcoming': upcoming_games
+            }
+        
+        return all_games
+
+    def get_game_stats(self, event_id):
+        # We need to find the specific event details. 
+        # Since we might not have the league context easily, we can try a general search or specific endpoint if we knew sport.
+        # However, usually we pass league/sport from frontend. 
+        # For now, let's assume valid ID works on the generic summary endpoint if we knew the sport.
+        # We'll try to guess sport or iterate or ask frontend to pass league.
+        # Let's rely on frontend passing league to index, maybe we can accept it here? 
+        # Actually, ESPN summary endpoint structure is: sports/{sport}/{league}/summary?event={id}
+        # If we don't know sport/league, we can't build URL easily without mapping event_id > league.
+        # BUT: The user will click from a known league context usually.
+        # Let's try to pass league_code if possible. If not, this is tricky. 
+        # We'll modify the signature to accept league_code (optional).
+        pass 
 
     def _fetch_league_games(self, league_code, type, dates):
         url = self._get_api_url(league_code)
@@ -92,14 +122,6 @@ class SportsService:
         unique_events = {e['id']: e for e in all_events}.values()
         games = list(unique_events)
         
-        # Sort by date
-        games.sort(key=lambda x: x['date'], reverse=(type == "past"))
-
-        if type == "upcoming":
-            return [g for g in games if g['status'] in ['pre', 'in']]
-        elif type == "past":
-            return [g for g in games if g['status'] == 'post']
-        
         return games
 
     def _process_event(self, event, league_code):
@@ -137,7 +159,110 @@ class SportsService:
         except Exception:
             return None
 
+    def get_game_stats(self, event_id, league_code):
+        url = self._get_api_url(league_code)
+        if not url: return None
+        
+        config = self.LEAGUES_CONFIG.get(league_code)
+        summary_url = f"http://site.api.espn.com/apis/site/v2/sports/{config['sport']}/{config['slug']}/summary"
+        
+        try:
+            data = self._fetch_from_url(summary_url, params={'event': event_id})
+            if not data: return None
+            
+            # Extract basic info
+            header = data.get('header', {})
+            comps = header.get('competitions', [{}])[0]
+            competitors = comps.get('competitors', [])
+            
+            home = next((c for c in competitors if c['homeAway'] == 'home'), {})
+            away = next((c for c in competitors if c['homeAway'] == 'away'), {})
+            
+            stats = {
+                'time': comps.get('status', {}).get('type', {}).get('detail', 'N/A'),
+                'score': f"{home.get('score','0')} - {away.get('score','0')}",
+                'home_team': {'name': home.get('team',{}).get('displayName'), 'logo': home.get('team',{}).get('logo')},
+                'away_team': {'name': away.get('team',{}).get('displayName'), 'logo': away.get('team',{}).get('logo')},
+                'stats': []
+            }
+
+            # Extract Box Score / Match Stats
+            boxscore = data.get('boxscore', {})
+            teams = boxscore.get('teams', [])
+            
+            if teams:
+                # Create a map for easy access
+                stat_map = {}
+                for t in teams:
+                     tm = t.get('team', {})
+                     t_stats = t.get('statistics', [])
+                     # Flatten stats
+                     for stat in t_stats:
+                         label = stat['label'] # e.g. "Possession"
+                         val = stat['displayValue']
+                         
+                         if label not in stat_map:
+                             stat_map[label] = {'home': '-', 'away': '-'}
+                             
+                         # Identify if this is home or away stats
+                         if tm.get('id') == home.get('id'):
+                             stat_map[label]['home'] = val
+                         else:
+                             stat_map[label]['away'] = val
+                
+                # Convert map to list
+                for label, vals in stat_map.items():
+                    stats['stats'].append({
+                        'label': label,
+                        'home': vals['home'],
+                        'away': vals['away']
+                    })
+                    
+            return stats
+
+        except Exception as e:
+            print(f"Error stats: {e}")
+            return None
+
     def get_finished_game(self, event_id, league_code):
+        # We need to know the sport/league to construct the URL
+        # We can try to infer or pass it. 
+        # For simplicity, we'll iterate configs or require league_code.
+        url = self._get_api_url(league_code)
+        if not url: return None
+        
+        # specific event endpoint usually: .../scoreboard/{id} but for dashboard we used params
+        # ESPN site API usually allows filtering by id via 'events' param or just fetching scoreboard
+        # Easiest: use the summary endpoint for one game
+        # http://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/summary?event={id}
+        
+        config = self.LEAGUES_CONFIG.get(league_code)
+        summary_url = f"http://site.api.espn.com/apis/site/v2/sports/{config['sport']}/{config['slug']}/summary"
+        
+        try:
+            data = self._fetch_from_url(summary_url, params={'event': event_id})
+            if not data or 'header' not in data: return None
+            
+            competitions = data['header']['competitions'][0]
+            status = competitions['status']['type']['state'] # 'post' if finished
+            
+            if status != 'post':
+                return {'status': status} # Not finished
+
+            # Winner info
+            competitors = competitions['competitors']
+            home = next((c for c in competitors if c['homeAway'] == 'home'), {})
+            away = next((c for c in competitors if c['homeAway'] == 'away'), {})
+            
+            return {
+                'status': 'post',
+                'home_score': int(home.get('score', 0)),
+                'away_score': int(away.get('score', 0)),
+                'winner': 'home' if home.get('winner') else ('away' if away.get('winner') else 'draw')
+            }
+        except Exception as e:
+            print(f"Error fetching game result: {e}")
+            return None
         # We need to know the sport/league to construct the URL
         # We can try to infer or pass it. 
         # For simplicity, we'll iterate configs or require league_code.

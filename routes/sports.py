@@ -15,8 +15,20 @@ def index():
     db_service.increment_visit()
     
     league = request.args.get('league', 'all') # Default to All
-    games = sports_service.get_games(league_code=league, type='upcoming')
-    return render_template('sports_index.html', games=games, active_league=league)
+    games_data = sports_service.get_games(league_code=league, type='upcoming')
+    
+    # If it's a dict (split), unpack. If legacy list (shouldn't be for upcoming), handle.
+    if isinstance(games_data, dict):
+        live_games = games_data.get('live', [])
+        upcoming_games = games_data.get('upcoming', [])
+    else:
+        live_games = []
+        upcoming_games = games_data
+        
+    return render_template('sports_index.html', 
+                         live_games=live_games, 
+                         upcoming_games=upcoming_games, 
+                         active_league=league)
 
 @sports_bp.route('/history')
 def history():
@@ -115,3 +127,10 @@ def predict():
         db_service.save_prediction(match_data, prediction)
         
     return jsonify(prediction)
+
+@sports_bp.route('/game/<league>/<event_id>/stats')
+def get_game_stats(league, event_id):
+    stats = sports_service.get_game_stats(event_id, league)
+    if not stats:
+        return jsonify({'error': 'Stats not found'}), 404
+    return jsonify(stats)

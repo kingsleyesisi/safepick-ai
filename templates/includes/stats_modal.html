@@ -1,0 +1,119 @@
+<!-- Stats Modal -->
+<div id="statsModal"
+    class="fixed inset-0 bg-zinc-900 bg-opacity-70 hidden flex items-center justify-center z-50 backdrop-blur-sm transition-opacity">
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden flex flex-col max-h-[90vh]">
+        <!-- Header -->
+        <div class="bg-zinc-50 border-b border-zinc-100 p-4 flex justify-between items-center">
+            <h3 class="font-bold text-zinc-900" id="statsModalTitle">Match Stats</h3>
+            <button onclick="closeStatsModal()" class="text-zinc-400 hover:text-zinc-700 p-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Live Score Header -->
+        <div id="statsHeader" class="p-6 bg-white shrink-0">
+            <!-- Injected via JS -->
+        </div>
+
+        <!-- Scrollable Stats -->
+        <div id="statsContent" class="p-6 overflow-y-auto bg-zinc-50 flex-1 space-y-4">
+            <div class="flex justify-center">
+                <div class="loader"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Stats Modal Logic
+    function openStatsModal(league, eventId, status) {
+        // Logic for "Match Not Started"
+        // We can pass 'status' string (e.g. 'pre', 'in', 'post')
+
+        if (status === 'pre') {
+            // Show toast or simple alert, or open modal with message?
+            // User said "let it just say match not started yet".
+            // A modal with that text is cleaner.
+            const modal = document.getElementById('statsModal');
+            const header = document.getElementById('statsHeader');
+            const content = document.getElementById('statsContent');
+
+            modal.classList.remove('hidden');
+            header.innerHTML = '';
+            content.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-12 text-center">
+                    <div class="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mb-4">
+                        <svg class="w-8 h-8 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-zinc-900">Match Not Started Yet</h3>
+                    <p class="text-zinc-500 mt-2">Statistics will be available once the match begins.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const modal = document.getElementById('statsModal');
+        const header = document.getElementById('statsHeader');
+        const content = document.getElementById('statsContent');
+
+        modal.classList.remove('hidden');
+        header.innerHTML = '';
+        content.innerHTML = '<div class="flex justify-center py-12"><div class="loader"></div></div>';
+
+        fetch(`/sports/game/${league}/${eventId}/stats`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    content.innerHTML = `<div class="text-center text-red-500 py-8">${data.error}</div>`;
+                    return;
+                }
+
+                // Populate Header
+                header.innerHTML = `
+                    <div class="flex justify-between items-center text-center">
+                        <div class="flex flex-col items-center w-1/3">
+                            <img src="${data.home_team.logo}" class="w-16 h-16 object-contain mb-2">
+                            <span class="font-bold text-lg leading-tight">${data.home_team.name}</span>
+                        </div>
+                        <div class="w-1/3 flex flex-col items-center">
+                            <span class="text-3xl font-black tracking-tighter">${data.score}</span>
+                            <span class="text-sm font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full mt-2 animate-pulse">${data.time}</span>
+                        </div>
+                        <div class="flex flex-col items-center w-1/3">
+                            <img src="${data.away_team.logo}" class="w-16 h-16 object-contain mb-2">
+                            <span class="font-bold text-lg leading-tight">${data.away_team.name}</span>
+                        </div>
+                    </div>
+                `;
+
+                // Populate Stats
+                if (!data.stats || data.stats.length === 0) {
+                    content.innerHTML = `<div class="text-center text-zinc-400 py-8 text-sm">No statistics available for this match.</div>`;
+                } else {
+                    let html = '<div class="space-y-4">';
+
+                    const CleanRows = data.stats.map(s => `
+                        <div class="flex items-center justify-between py-3 border-b border-zinc-100 last:border-0">
+                            <span class="text-sm font-bold w-12 text-center">${s.home}</span>
+                            <span class="text-sm text-zinc-500 font-medium flex-1 text-center uppercase tracking-wide text-[10px]">${s.label}</span>
+                            <span class="text-sm font-bold w-12 text-center">${s.away}</span>
+                        </div>
+                    `).join('');
+
+                    content.innerHTML = `<div class="bg-white rounded-lg border border-zinc-200 p-2">${CleanRows}</div>`;
+                }
+            })
+            .catch(err => {
+                content.innerHTML = `<div class="text-center text-red-500 py-8">Failed to load stats.</div>`;
+            });
+    }
+
+    function closeStatsModal() {
+        document.getElementById('statsModal').classList.add('hidden');
+    }
+</script>
