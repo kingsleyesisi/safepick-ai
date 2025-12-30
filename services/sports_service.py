@@ -1,6 +1,7 @@
 
 import requests
 from datetime import datetime, timedelta
+import concurrent.futures
 
 class SportsService:
     # Configuration for supported leagues and their ESPN paths
@@ -39,9 +40,16 @@ class SportsService:
         all_games = []
         if league_code == 'all':
              # Aggregate all leagues (expensive, but requested)
-             for code in self.LEAGUES_CONFIG.keys():
-                 games = self._fetch_league_games(code, type, dates)
-                 all_games.extend(games)
+             with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+                 # Submit all tasks
+                 future_to_code = {executor.submit(self._fetch_league_games, code, type, dates): code for code in self.LEAGUES_CONFIG.keys()}
+                 
+                 for future in concurrent.futures.as_completed(future_to_code):
+                     try:
+                         games = future.result()
+                         all_games.extend(games)
+                     except Exception as exc:
+                         print(f"League fetching generated an exception: {exc}")
         else:
              all_games = self._fetch_league_games(league_code, type, dates)
         

@@ -4,3 +4,4 @@ google-genai
 flask-cors
 requests
 gunicorn
+psycopg2-binary
