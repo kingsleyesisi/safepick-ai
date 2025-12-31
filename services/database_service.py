@@ -2,8 +2,12 @@
 import sqlite3
 import json
 import os
-import psycopg2
-from psycopg2.extras import RealDictCursor
+try:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+except ImportError:
+    psycopg2 = None
+    RealDictCursor = None
 from datetime import datetime
 
 class DatabaseService:
@@ -46,10 +50,18 @@ class DatabaseService:
                         league TEXT,
                         prediction_json TEXT,
                         result TEXT,
+                        device TEXT,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                 ''')
                 
+                # Add device column if missing (Migration)
+                try:
+                    cursor.execute("ALTER TABLE predictions ADD COLUMN device TEXT")
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
+
                 # Stats table
                 cursor.execute('''
                     CREATE TABLE IF NOT EXISTS site_stats (
@@ -73,10 +85,18 @@ class DatabaseService:
                         league TEXT,
                         prediction_json TEXT,
                         result TEXT,
+                        device TEXT,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                 ''')
                 
+                # Add device column if missing
+                try:
+                    cursor.execute("ALTER TABLE predictions ADD COLUMN device TEXT")
+                    conn.commit() # Commit schema change
+                except Exception:
+                    pass # Column likely exists
+
                 cursor.execute('''
                     CREATE TABLE IF NOT EXISTS site_stats (
                         param_key TEXT PRIMARY KEY,
@@ -100,14 +120,15 @@ class DatabaseService:
             ph = self._get_placeholder()
             
             cursor.execute(f'''
-                INSERT INTO predictions (match_id, home_team, away_team, league, prediction_json)
-                VALUES ({ph}, {ph}, {ph}, {ph}, {ph})
+                INSERT INTO predictions (match_id, home_team, away_team, league, prediction_json, device)
+                VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, {ph})
             ''', (
                 match_data.get('id', 'unknown'),
                 match_data.get('home_team'),
                 match_data.get('away_team'),
                 match_data.get('league'),
-                json.dumps(prediction_result)
+                json.dumps(prediction_result),
+                match_data.get('device', 'Unknown')
             ))
             
             # Increment total predictions count

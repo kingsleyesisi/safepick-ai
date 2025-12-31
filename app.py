@@ -54,8 +54,17 @@ def index():
     from services.sports_service import SportsService
     sports_service = SportsService()
     league = request.args.get('league', 'all')
-    games = sports_service.get_games(league_code=league, type='upcoming')
-    return render_template('sports_index.html', games=games, active_league=league)
+    games_data = sports_service.get_games(league_code=league, type='upcoming')
+    
+    # Unpack games data if it's a dict (which it is for type='upcoming')
+    if isinstance(games_data, dict):
+        live_games = games_data.get('live', [])
+        upcoming_games = games_data.get('upcoming', [])
+    else:
+        live_games = []
+        upcoming_games = games_data
+
+    return render_template('sports_index.html', live_games=live_games, upcoming_games=upcoming_games, active_league=league)
 
 @app.route('/test_api')
 def test_api():

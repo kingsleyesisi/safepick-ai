@@ -62,45 +62,100 @@ def reset_stats():
 
 @sports_bp.route('/stats/check-results', methods=['POST'])
 def check_results():
+    import concurrent.futures
+    
     pending = db_service.get_pending_predictions()
+    if not pending:
+        return jsonify({"updated": 0})
+    
     updated_count = 0
     
-    for pred in pending:
-        # Check if we have structured data
-        p_data = pred.get('prediction_data', {})
-        struc = p_data.get('structured_prediction')
-        match_id = pred.get('match_id')
-        league = pred.get('league')
-        
-        # If no structured data or if match_id is the old format (home-away), we skip or need fallback
-        # Ideally we only grade new ones with event_id (numeric string usually)
-        if not struc or not match_id or '-' in match_id: 
-            continue
+    def grade_single_prediction(pred):
+        """Fetch and grade a single prediction efficiently"""
+        try:
+            match_id = pred.get('match_id')
+            league = pred.get('league')
+            p_data = pred.get('prediction_data', {})
+            struc = p_data.get('structured_prediction')
             
-        # Fetch actual result
-        game_res = sports_service.get_finished_game(match_id, league)
-        
-        if game_res and game_res['status'] == 'post':
-            # Grading Logic
-            result = 'Void' # Default
+            if not struc or not match_id or not league:
+                return None
             
-            # Winner Market
-            if struc.get('type') == 'winner':
-                predicted_target = struc.get('target', '').lower() # home/away
-                actual_winner = game_res.get('winner')
+            # Directly fetch this specific game
+            game_result = None
+            
+            if league and league != 'all':
+                game_result = sports_service.get_finished_game(match_id, league)
+            else:
+                # If league is 'all' or missing, we must search all leagues for this ID
+                # Iterate through all configured leagues
+                # This is acceptable because it's only for specific single IDs, not a full history fetch
+                for code in sports_service.LEAGUES_CONFIG.keys():
+                    res = sports_service.get_finished_game(match_id, code)
+                    if res:
+                        game_result = res
+                        break
+            
+            if not game_result or game_result.get('status') != 'post':
+                return None  # Game not finished yet
+            
+            # Extract scores
+            h_score = game_result.get('home_score', 0)
+            a_score = game_result.get('away_score', 0)
+            
+            # Determine result based on market type
+            result = 'Void'
+            market_type = struc.get('market_type')
+            
+            if market_type == 'moneyline' or struc.get('type') == 'winner':
+                actual_winner = game_result.get('winner')  # 'home', 'away', 'draw'
+                selection = struc.get('selection', struc.get('target', '')).lower()
                 
-                if predicted_target == actual_winner:
+                if selection == actual_winner:
                     result = 'Win'
                 elif actual_winner == 'draw':
-                    # If bet was Draw, win. If bet was Team, Loss.
-                    result = 'Win' if predicted_target == 'draw' else 'Loss'
+                    result = 'Win' if selection == 'draw' else 'Loss'
                 else:
                     result = 'Loss'
+                    
+            elif market_type == 'over_under':
+                total = h_score + a_score
+                line = float(struc.get('line', 0))
+                direction = struc.get('selection', '').lower()
+                
+                if direction == 'over':
+                    result = 'Win' if total > line else 'Loss'
+                elif direction == 'under':
+                    result = 'Win' if total < line else 'Loss'
+                    
+            elif market_type == 'double_chance':
+                actual_winner = game_result.get('winner')
+                sel = struc.get('selection', '').upper()
+                
+                if sel == '1X':
+                    result = 'Win' if actual_winner in ['home', 'draw'] else 'Loss'
+                elif sel == 'X2':
+                    result = 'Win' if actual_winner in ['away', 'draw'] else 'Loss'
+                elif sel == '12':
+                    result = 'Win' if actual_winner in ['home', 'away'] else 'Loss'
             
-            # Update DB
-            db_service.update_prediction_result(pred['id'], result)
-            updated_count += 1
+            # Update if we got a valid result
+            if result in ['Win', 'Loss', 'Void']:
+                db_service.update_prediction_result(pred['id'], result)
+                print(f"✓ Graded {match_id}: {result} (Score: {h_score}-{a_score})")
+                return 1
             
+            return None
+            
+        except Exception as e:
+            print(f"Error grading prediction {pred.get('id')}: {e}")
+            return None
+    
+    # Process all predictions concurrently
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        results = executor.map(grade_single_prediction, pending)
+        updated_count = sum(r for r in results if r)
+    
     return jsonify({"updated": updated_count})
         
 @sports_bp.route('/predict', methods=['POST'])
@@ -110,6 +165,7 @@ def predict():
     away = data.get('away_team')
     league = data.get('league')
     event_id = data.get('event_id')
+    device = data.get('device', 'Unknown')
     
     if not home or not away:
         return jsonify({'error': 'Missing team data'}), 400
@@ -122,7 +178,8 @@ def predict():
             "id": event_id if event_id else f"{home}-{away}-{league}", 
             "home_team": home,
             "away_team": away,
-            "league": league
+            "league": league,
+            "device": device
         }
         db_service.save_prediction(match_data, prediction)
         

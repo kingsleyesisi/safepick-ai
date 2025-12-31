@@ -146,21 +146,27 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <!-- Logo & Desktop Nav -->
-                <div class="flex">
-                    <div class="flex-shrink-0 flex items-center">
-                        <a href="/sports" class="text-xl font-bold tracking-tight">SafePick AI</a>
-                    </div>
-                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                <div class="flex items-center gap-8">
+                    <div class="flex-shrink-0 flex items-center gap-3">
                         <a href="/sports"
-                            class="border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            class="text-xl font-bold tracking-tight bg-gradient-to-r from-zinc-900 to-zinc-600 bg-clip-text text-transparent">SafePick
+                            AI</a>
+                        <span
+                            class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border border-blue-100">
+                            AI Generated Odds
+                        </span>
+                    </div>
+                    <div class="hidden sm:flex sm:space-x-1">
+                        <a href="/sports"
+                            class="px-3 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 transition-all">
                             Upcoming
                         </a>
                         <a href="/sports/history"
-                            class="border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            class="px-3 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 transition-all">
                             History
                         </a>
                         <a href="/sports/stats"
-                            class="border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            class="px-3 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 transition-all">
                             Stats
                         </a>
                     </div>
@@ -169,11 +175,9 @@
                 <!-- Mobile menu button -->
                 <div class="-mr-2 flex items-center sm:hidden">
                     <button type="button" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"
-                        class="inline-flex items-center justify-center p-2 rounded-md text-zinc-400 hover:text-zinc-500 hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-black">
+                        class="inline-flex items-center justify-center p-2 rounded-md text-zinc-400 hover:text-zinc-500 hover:bg-zinc-100 focus:outline-none">
                         <span class="sr-only">Open main menu</span>
-                        <!-- Icon when menu is closed. -->
-                        <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" aria-hidden="true">
+                        <svg class="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
@@ -182,15 +186,15 @@
             </div>
         </div>
 
-        <!-- Mobile menu, show/hide based on menu state. -->
-        <div class="hidden sm:hidden" id="mobile-menu">
-            <div class="pt-2 pb-3 space-y-1">
+        <!-- Mobile menu -->
+        <div class="hidden sm:hidden bg-white border-t border-zinc-100" id="mobile-menu">
+            <div class="pt-2 pb-3 space-y-1 px-4">
                 <a href="/sports"
-                    class="bg-zinc-50 border-black text-zinc-900 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Upcoming</a>
+                    class="block px-3 py-2 rounded-md text-base font-medium text-zinc-900 bg-zinc-50">Upcoming</a>
                 <a href="/sports/history"
-                    class="border-transparent text-zinc-500 hover:bg-zinc-50 hover:border-zinc-300 hover:text-zinc-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">History</a>
+                    class="block px-3 py-2 rounded-md text-base font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50">History</a>
                 <a href="/sports/stats"
-                    class="border-transparent text-zinc-500 hover:bg-zinc-50 hover:border-zinc-300 hover:text-zinc-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Stats</a>
+                    class="block px-3 py-2 rounded-md text-base font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50">Stats</a>
             </div>
         </div>
     </nav>
@@ -250,28 +254,111 @@
         // Splash Screen Logic
         document.addEventListener('DOMContentLoaded', () => {
             const splash = document.getElementById('splash-screen');
+            const hasSeenSplash = sessionStorage.getItem('hasSeenSplash');
 
-            // Check if seen in session
-            // const hasSeenSplash = sessionStorage.getItem('hasSeenSplash');
-            // If user wants it EVERY time they access home page, we can skip the session check.
-            // "once user access the home page" implies per visit or session.
-            // Let's make it show every time specifically on full reload for "premium" feel, 
-            // or uncomment below to limit to once per session.
-
-            setTimeout(() => {
+            if (hasSeenSplash) {
+                splash.style.display = 'none'; // Hide immediately
                 splash.classList.add('hidden-splash');
-                // sessionStorage.setItem('hasSeenSplash', 'true');
-            }, 2500); // 2.5 seconds display
+            } else {
+                // Show splash
+                setTimeout(() => {
+                    splash.classList.add('hidden-splash');
+                    sessionStorage.setItem('hasSeenSplash', 'true');
+                }, 2500); // 2.5 seconds display
+            }
         });
 
         function closeModal() {
             document.getElementById('predictionModal').classList.add('hidden');
         }
 
+        // Device Maps
+        const iosDeviceMapping = new Map([
+            ["320x480", "IPhone 4S, 4, 3GS, 3G, 1st gen"],
+            ["320x568", "IPhone 5, SE 1st Gen,5C, 5S"],
+            ["375x667", "IPhone SE 2nd Gen, 6, 6S, 7, 8"],
+            ["375x812", "IPhone X, XS, 11 Pro, 12 Mini, 13 Mini"],
+            ["390x844", "IPhone 13, 13 Pro, 12, 12 Pro"],
+            ["414x736", "IPhone 8+"],
+            ["414x896", "IPhone 11, XR, XS Max, 11 Pro Max"],
+            ["428x926", "IPhone 13 Pro Max, 12 Pro Max"],
+            ["476x847", "IPhone 7+, 6+, 6S+"],
+            ["744x1133", "IPad Mini 6th Gen"],
+            [
+                "768x1024",
+                "IPad Mini (5th Gen), IPad (1-6th Gen), iPad Pro (1st Gen 9.7), Ipad Mini (1-4), IPad Air(1-2)  ",
+            ],
+            ["810x1080", "IPad 7-9th Gen"],
+            ["820x1180", "iPad Air (4th gen)"],
+            ["834x1194", "iPad Pro (3-5th Gen 11)"],
+            ["834x1112", "iPad Air (3rd gen), iPad Pro (2nd gen 10.5)"],
+            ["1024x1366", "iPad Pro (1-5th Gen 12.9)"],
+        ]);
+
+        const desktopDeviceMapping = new Map([
+            ["Win32", "Windows"],
+            ["Linux", "Linux"],
+            ["MacIntel", "Mac OS"],
+        ]);
+
+
+        // get device name for android
+        const getAndroidDeviceName = () => {
+            const androidUserAgentString = window.navigator.userAgent.slice(window.navigator.userAgent.indexOf("Android"));
+            const androidDeviceName = androidUserAgentString.slice(androidUserAgentString.indexOf("; ") + 1, androidUserAgentString.indexOf(")"));
+            if (androidDeviceName) {
+                return androidDeviceName.trim().split(" ")[0];
+            }
+
+            return "Android";
+        };
+
+        // get device name for ios
+        const getIosDeviceName = () => {
+            const screenResolution = `${window.screen.width}x${window.screen.height}`;
+            const device = iosDeviceMapping.get(screenResolution);
+            if (device) {
+                return device;
+            }
+            return "Iphone";
+        };
+
+        // get device name for desktop
+        const getDesktopDeviceName = () => {
+            const platform = navigator?.userAgentData?.platform || navigator?.platform || "unknown";
+            device = desktopDeviceMapping.get(platform) ?? "Unknown";
+            return device;
+        };
+
+        // get device name utility
+        function getDeviceName() {
+            let device = "";
+
+            // check if mobile device
+            const isMobileDevice = window.navigator.userAgent
+                .toLowerCase()
+                .includes("mobi");
+
+            if (isMobileDevice) {
+                if (window.navigator.userAgent.includes("Android")) {
+                    device = getAndroidDeviceName();
+                } else {
+                    device = getIosDeviceName();
+                }
+            } else {
+                device = getDesktopDeviceName();
+            }
+
+            return device;
+        }
+
         async function predictMatch(id, home, away, league) {
             const modal = document.getElementById('predictionModal');
             const content = document.getElementById('modalContent');
             const title = document.getElementById('modalTitle');
+
+            // Get device
+            const deviceName = getDeviceName();
 
             title.innerText = `${home} vs ${away}`;
             content.innerHTML = '<div class="flex justify-center p-8"><div class="loader"></div></div>';
@@ -281,7 +368,13 @@
                 const response = await fetch('/sports/predict', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ event_id: id, home_team: home, away_team: away, league: league })
+                    body: JSON.stringify({
+                        event_id: id,
+                        home_team: home,
+                        away_team: away,
+                        league: league,
+                        device: deviceName
+                    })
                 });
 
                 const data = await response.json();
@@ -327,7 +420,7 @@
                             
                             <!-- Disclaimer -->
                             <div class="text-xs text-zinc-400 text-center italic border-t border-zinc-100 pt-4">
-                                ${disclaimer} <br> SafePick AI • Gemini 2.0 Flash
+                                ${disclaimer} <br> This Odd is AI generated, Please use with Caution
                             </div>
                         </div>
                     `;

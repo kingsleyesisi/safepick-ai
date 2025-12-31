@@ -101,9 +101,9 @@ class SportsService:
         if dates:
             request_dates = [dates]
         elif type == "past":
-            # Fetch last 30 days using range
+            # Fetch last 90 days using range to catch older pending predictions
             today = datetime.now()
-            start = (today - timedelta(days=30)).strftime("%Y%m%d")
+            start = (today - timedelta(days=90)).strftime("%Y%m%d")
             end = today.strftime("%Y%m%d")
             request_dates = [f"{start}-{end}"]
         else: # upcoming

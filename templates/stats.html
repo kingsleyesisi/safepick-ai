@@ -7,10 +7,7 @@
             <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Platform Statistics</h1>
             <p class="text-zinc-500 text-sm mt-1">Real-time usage metrics and auto-graded results.</p>
         </div>
-        <button onclick="resetStats()"
-            class="px-4 py-2 bg-red-50 text-red-600 text-sm font-bold rounded-lg hover:bg-red-100 transition-colors">
-            Reset All Stats
-        </button>
+        <!-- Reset Button Removed -->
     </div>
 
     <!-- Key Metrics Grid -->
@@ -78,6 +75,9 @@
                         <span class="px-2 py-0.5 bg-zinc-100 text-zinc-600 rounded text-[10px] font-bold uppercase">{{
                             pred.league }}</span>
                         <span class="text-xs text-zinc-500">{{ pred.created_at }}</span>
+                        {% if pred.device %}
+                        <span class="text-xs text-zinc-400 border-l border-zinc-200 pl-2 ml-1">{{ pred.device }}</span>
+                        {% endif %}
                     </div>
                     <div class="mt-2 text-sm text-zinc-800">
                         P: <strong>{{ pred.prediction_data.best_pick }}</strong>
@@ -110,14 +110,6 @@
 </div>
 
 <script>
-    async function resetStats() {
-        if (!confirm("Are you sure? This will delete all history.")) return;
-        try {
-            await fetch('/sports/stats/reset', { method: 'POST' });
-            window.location.reload();
-        } catch (e) { alert("Error resetting"); }
-    }
-
     async function checkResults() {
         try {
             await fetch('/sports/stats/check-results', { method: 'POST' });
